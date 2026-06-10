@@ -12,6 +12,7 @@ spring:
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:update}
     show-sql: ${JPA_SHOW_SQL:false}
+    open-in-view: false
   mail:
     host: smtp.gmail.com
     port: 587
