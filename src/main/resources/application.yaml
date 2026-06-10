@@ -1,6 +1,8 @@
 spring:
   application:
     name: DocumentManagement
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:default}
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -8,8 +10,8 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:false}
   mail:
     host: smtp.gmail.com
     port: 587
@@ -30,8 +32,19 @@ app:
   jwt:
     secret: ${JWT_SECRET}
     expiration-ms: 86400000
+  cors:
+    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*}
+  admin:
+    seed:
+      enabled: ${ADMIN_SEED_ENABLED:false}
+      email: ${ADMIN_SEED_EMAIL:}
+      password: ${ADMIN_SEED_PASSWORD:}
+      full-name: ${ADMIN_SEED_FULL_NAME:System Administrator}
 
 cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME}
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET}
+
+server:
+  port: ${PORT:8080}
