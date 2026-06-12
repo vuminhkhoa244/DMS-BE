@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+@org.hibernate.annotations.BatchSize(size = 50)
 public class Category {
 
     @Id

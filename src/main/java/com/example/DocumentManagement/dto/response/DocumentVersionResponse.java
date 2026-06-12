@@ -15,7 +15,7 @@ public class DocumentVersionResponse {
 
     private Long id;
     private int versionNumber;
-    private String fileUrl;
+    private String fileName;
     private String fileType;
     private Long fileSize;
     private String comment;
@@ -27,7 +27,7 @@ public class DocumentVersionResponse {
         return new DocumentVersionResponse(
                 v.getId(),
                 v.getVersionNumber(),
-                v.getFileUrl(),
+                v.getFileName(),
                 v.getFileType(),
                 v.getFileSize(),
                 v.getComment(),

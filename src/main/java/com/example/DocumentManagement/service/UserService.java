@@ -10,9 +10,18 @@ import com.example.DocumentManagement.entity.Role;
 import com.example.DocumentManagement.entity.User;
 import com.example.DocumentManagement.exception.BadRequestException;
 import com.example.DocumentManagement.exception.ResourceNotFoundException;
+import com.example.DocumentManagement.repository.AuditLogRepository;
+import com.example.DocumentManagement.repository.DocumentCollaboratorRepository;
+import com.example.DocumentManagement.repository.DocumentRepository;
+import com.example.DocumentManagement.repository.DocumentVersionRepository;
+import com.example.DocumentManagement.repository.NotificationRepository;
+import com.example.DocumentManagement.repository.OrganizationMemberRepository;
+import com.example.DocumentManagement.repository.OrganizationRepository;
 import com.example.DocumentManagement.repository.UserRepository;
+import com.example.DocumentManagement.repository.WorkflowHistoryRepository;
 import com.example.DocumentManagement.security.JwtTokenProvider;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -33,14 +42,37 @@ public class UserService implements UserDetailsService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final AuditLogService auditLogService;
+    private final AuditLogRepository auditLogRepository;
+    private final NotificationRepository notificationRepository;
+    private final WorkflowHistoryRepository workflowHistoryRepository;
+    private final DocumentVersionRepository documentVersionRepository;
+    private final DocumentCollaboratorRepository collaboratorRepository;
+    private final OrganizationMemberRepository memberRepository;
+    private final OrganizationRepository organizationRepository;
+    private final DocumentRepository documentRepository;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
                        JwtTokenProvider jwtTokenProvider, @Lazy AuthenticationManager authenticationManager,
-                       AuditLogService auditLogService) {
+                       AuditLogService auditLogService, AuditLogRepository auditLogRepository,
+                       NotificationRepository notificationRepository,
+                       WorkflowHistoryRepository workflowHistoryRepository,
+                       DocumentVersionRepository documentVersionRepository,
+                       DocumentCollaboratorRepository collaboratorRepository,
+                       OrganizationMemberRepository memberRepository,
+                       OrganizationRepository organizationRepository,
+                       DocumentRepository documentRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
         this.authenticationManager = authenticationManager;
+        this.auditLogRepository = auditLogRepository;
+        this.notificationRepository = notificationRepository;
+        this.workflowHistoryRepository = workflowHistoryRepository;
+        this.documentVersionRepository = documentVersionRepository;
+        this.collaboratorRepository = collaboratorRepository;
+        this.memberRepository = memberRepository;
+        this.organizationRepository = organizationRepository;
+        this.documentRepository = documentRepository;
         this.auditLogService = auditLogService;
     }
 
@@ -123,6 +155,9 @@ public class UserService implements UserDetailsService {
         }
 
         userRepository.save(user);
+
+        auditLogService.log(user, "UPDATE_PROFILE", "User", null, "Profile updated");
+
         return UserResponse.from(user);
     }
 
@@ -161,9 +196,29 @@ public class UserService implements UserDetailsService {
                 .toList();
     }
 
+    @Transactional
     public void deleteUser(UUID userId, User admin) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+
+        // Block if user still owns an org — admin must transfer ownership first.
+        if (organizationRepository.existsByOwnerId(userId)) {
+            throw new BadRequestException(
+                    "User owns one or more organizations. Transfer ownership before deleting.");
+        }
+
+        // Nullify historical references (keep records, remove user link).
+        auditLogRepository.nullifyUser(userId);
+        workflowHistoryRepository.nullifyPerformedBy(userId);
+        documentVersionRepository.nullifyUploadedBy(userId);
+
+        // Remove user's notifications, memberships, and collaborations.
+        notificationRepository.deleteByUserId(userId);
+        memberRepository.deleteByUserId(userId);
+        collaboratorRepository.deleteByUserId(userId);
+
+        // Soft-delete all documents owned by this user.
+        documentRepository.softDeleteByOwnerId(userId);
 
         auditLogService.log(admin, "DELETE_USER", "User", null, "Deleted user: " + user.getEmail());
         userRepository.delete(user);

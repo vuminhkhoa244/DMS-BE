@@ -4,11 +4,17 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "workflow_history")
+@Table(name = "workflow_history", indexes = {
+        @Index(name = "idx_wf_document", columnList = "document_id"),
+        @Index(name = "idx_wf_performed_by", columnList = "performed_by"),
+        @Index(name = "idx_wf_to_status", columnList = "to_status")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,6 +26,7 @@ public class WorkflowHistory {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Document document;
 
     @Enumerated(EnumType.STRING)
@@ -33,7 +40,7 @@ public class WorkflowHistory {
     private String comment;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "performed_by", nullable = false)
+    @JoinColumn(name = "performed_by")
     private User performedBy;
 
     @Column(name = "created_at", nullable = false, updatable = false)

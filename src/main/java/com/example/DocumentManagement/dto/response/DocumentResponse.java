@@ -20,23 +20,17 @@ public class DocumentResponse {
     private Long categoryId;
     private String categoryName;
     private String status;
+    private String visibility;
+    private UUID organizationId;
+    private String organizationName;
     private List<String> tags;
     private UUID createdById;
     private String createdByName;
-    private String latestFileUrl;
     private int latestVersion;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public static DocumentResponse from(Document doc) {
-        String latestUrl = null;
-        int latestVer = 0;
-        if (doc.getVersions() != null && !doc.getVersions().isEmpty()) {
-            var latest = doc.getVersions().getFirst();
-            latestUrl = latest.getFileUrl();
-            latestVer = latest.getVersionNumber();
-        }
-
         return new DocumentResponse(
                 doc.getId(),
                 doc.getTitle(),
@@ -44,11 +38,13 @@ public class DocumentResponse {
                 doc.getCategory() != null ? doc.getCategory().getId() : null,
                 doc.getCategory() != null ? doc.getCategory().getName() : null,
                 doc.getStatus().name(),
+                doc.getVisibility().name(),
+                doc.getOrganization() != null ? doc.getOrganization().getId() : null,
+                doc.getOrganization() != null ? doc.getOrganization().getName() : null,
                 doc.getTags(),
                 doc.getCreatedBy().getId(),
                 doc.getCreatedBy().getFullName(),
-                latestUrl,
-                latestVer,
+                doc.getLatestVersion(),
                 doc.getCreatedAt(),
                 doc.getUpdatedAt()
         );

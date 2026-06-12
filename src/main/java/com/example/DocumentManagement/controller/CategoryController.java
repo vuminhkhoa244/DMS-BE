@@ -3,11 +3,13 @@ package com.example.DocumentManagement.controller;
 import com.example.DocumentManagement.dto.request.CategoryRequest;
 import com.example.DocumentManagement.dto.response.ApiResponse;
 import com.example.DocumentManagement.dto.response.CategoryResponse;
+import com.example.DocumentManagement.entity.User;
 import com.example.DocumentManagement.service.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,7 +24,6 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
-    // Anyone authenticated can view categories
     @GetMapping
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> getAll() {
         List<CategoryResponse> categories = categoryService.getAll();
@@ -35,11 +36,11 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.ok("Category retrieved", response));
     }
 
-    // Only ADMIN/MANAGER can manage categories
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<ApiResponse<CategoryResponse>> create(@Valid @RequestBody CategoryRequest request) {
-        CategoryResponse response = categoryService.create(request);
+    public ResponseEntity<ApiResponse<CategoryResponse>> create(@Valid @RequestBody CategoryRequest request,
+                                                                 @AuthenticationPrincipal User user) {
+        CategoryResponse response = categoryService.create(request, user);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Category created", response));
     }
@@ -47,15 +48,17 @@ public class CategoryController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ApiResponse<CategoryResponse>> update(@PathVariable Long id,
-                                                                 @Valid @RequestBody CategoryRequest request) {
-        CategoryResponse response = categoryService.update(id, request);
+                                                                 @Valid @RequestBody CategoryRequest request,
+                                                                 @AuthenticationPrincipal User user) {
+        CategoryResponse response = categoryService.update(id, request, user);
         return ResponseEntity.ok(ApiResponse.ok("Category updated", response));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
-        categoryService.delete(id);
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id,
+                                                     @AuthenticationPrincipal User user) {
+        categoryService.delete(id, user);
         return ResponseEntity.ok(ApiResponse.ok("Category deleted", null));
     }
 }

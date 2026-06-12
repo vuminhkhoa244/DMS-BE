@@ -14,10 +14,13 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", indexes = {
+        @Index(name = "idx_user_role", columnList = "role")
+})
 @Getter
 @Setter
 @NoArgsConstructor
+@org.hibernate.annotations.BatchSize(size = 50)
 public class User implements UserDetails {
 
     @Id

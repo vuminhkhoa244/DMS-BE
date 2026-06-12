@@ -5,6 +5,7 @@ import com.example.DocumentManagement.dto.request.RegisterRequest;
 import com.example.DocumentManagement.dto.response.ApiResponse;
 import com.example.DocumentManagement.dto.response.AuthResponse;
 import com.example.DocumentManagement.service.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Auth", description = "Register, login, get current user")
 public class AuthController {
 
     private final UserService userService;

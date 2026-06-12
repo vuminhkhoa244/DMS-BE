@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: DocumentManagement
+  datasource:
+    url: jdbc:h2:mem:dmtest;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    open-in-view: false
+  sql:
+    init:
+      mode: never
+  mail:
+    host: localhost
+    port: 25
+    username: test
+    password: test
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+app:
+  jwt:
+    secret: test-secret-test-secret-test-secret-test-secret-test-secret-12
+    expiration-ms: 86400000
+
+minio:
+  endpoint: http://127.0.0.1:10005
+  access-key: thaily
+  secret-key: Th@i2004
+  bucket: dm-documents-test
+  presigned-expiry-minutes: 60
+  public-endpoint:

@@ -3,55 +3,48 @@ package com.example.DocumentManagement.config;
 import com.example.DocumentManagement.entity.Role;
 import com.example.DocumentManagement.entity.User;
 import com.example.DocumentManagement.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
 
+    private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final boolean adminSeedEnabled;
-    private final String adminEmail;
-    private final String adminPassword;
-    private final String adminFullName;
 
-    public DataInitializer(
-            UserRepository userRepository,
-            PasswordEncoder passwordEncoder,
-            @Value("${app.admin.seed.enabled}") boolean adminSeedEnabled,
-            @Value("${app.admin.seed.email}") String adminEmail,
-            @Value("${app.admin.seed.password}") String adminPassword,
-            @Value("${app.admin.seed.full-name}") String adminFullName) {
+    public DataInitializer(UserRepository userRepository,
+                           PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.adminSeedEnabled = adminSeedEnabled;
-        this.adminEmail = adminEmail;
-        this.adminPassword = adminPassword;
-        this.adminFullName = adminFullName;
     }
 
     @Override
+    @Transactional
     public void run(String... args) {
-        if (!adminSeedEnabled) {
-            return;
-        }
-
-        if (!StringUtils.hasText(adminEmail) || !StringUtils.hasText(adminPassword)) {
-            throw new IllegalStateException("ADMIN_SEED_EMAIL and ADMIN_SEED_PASSWORD are required when ADMIN_SEED_ENABLED=true");
-        }
-
-        if (!userRepository.existsByEmail(adminEmail)) {
+        if (!userRepository.existsByEmail("admin@dm.com")) {
             User admin = new User();
-            admin.setEmail(adminEmail);
-            admin.setPassword(passwordEncoder.encode(adminPassword));
-            admin.setFullName(adminFullName);
+            admin.setEmail("admin@dm.com");
+            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setFullName("System Administrator");
             admin.setRole(Role.ADMIN);
             userRepository.save(admin);
-            System.out.println(">>> Admin seed account created: " + adminEmail);
+            log.info(">>> Default admin account created: admin@dm.com / admin123");
+        }
+
+        if (!userRepository.existsByEmail("manager@dm.com")) {
+            User manager = new User();
+            manager.setEmail("manager@dm.com");
+            manager.setPassword(passwordEncoder.encode("manager123"));
+            manager.setFullName("Sample Manager");
+            manager.setRole(Role.MANAGER);
+            userRepository.save(manager);
+            log.info(">>> Default manager account created: manager@dm.com / manager123");
         }
     }
 }
