@@ -39,7 +39,7 @@ public class DocumentService {
     private final OrganizationMemberRepository memberRepository;
     private final DocumentCollaboratorRepository collaboratorRepository;
     private final UserRepository userRepository;
-    private final MinioService minioService;
+    private final CloudinaryService cloudinaryService;
     private final DocumentAccessService accessService;
     private final AuditLogService auditLogService;
     private final NotificationService notificationService;
@@ -52,7 +52,7 @@ public class DocumentService {
                            OrganizationMemberRepository memberRepository,
                            DocumentCollaboratorRepository collaboratorRepository,
                            UserRepository userRepository,
-                           MinioService minioService,
+                           CloudinaryService cloudinaryService,
                            DocumentAccessService accessService,
                            AuditLogService auditLogService,
                            NotificationService notificationService) {
@@ -64,7 +64,7 @@ public class DocumentService {
         this.memberRepository = memberRepository;
         this.collaboratorRepository = collaboratorRepository;
         this.userRepository = userRepository;
-        this.minioService = minioService;
+        this.cloudinaryService = cloudinaryService;
         this.accessService = accessService;
         this.auditLogService = auditLogService;
         this.notificationService = notificationService;
@@ -107,8 +107,8 @@ public class DocumentService {
         // Build namespaced object key and upload
         String namespace = (org == null) ? "personal" : "orgs";
         String namespaceId = (org == null) ? user.getId().toString() : org.getId().toString();
-        String objectKey = minioService.buildKey(namespace, namespaceId, file.getOriginalFilename());
-        minioService.upload(file, objectKey);
+        String objectKey = cloudinaryService.buildKey(namespace, namespaceId, file.getOriginalFilename());
+        cloudinaryService.upload(file, objectKey);
 
         DocumentVersion version = new DocumentVersion();
         version.setDocument(document);
@@ -250,8 +250,8 @@ public class DocumentService {
         String namespaceId = (document.getOrganization() == null)
                 ? document.getCreatedBy().getId().toString()
                 : document.getOrganization().getId().toString();
-        String objectKey = minioService.buildKey(namespace, namespaceId, file.getOriginalFilename());
-        minioService.upload(file, objectKey);
+        String objectKey = cloudinaryService.buildKey(namespace, namespaceId, file.getOriginalFilename());
+        cloudinaryService.upload(file, objectKey);
 
         int nextVersion = versionRepository.findTopByDocumentIdOrderByVersionNumberDesc(documentId)
                 .map(v -> v.getVersionNumber() + 1)
@@ -305,7 +305,7 @@ public class DocumentService {
         }
         auditLogService.log(user, "DOWNLOAD", "Document", documentId,
                 "Downloaded: " + document.getTitle());
-        return minioService.presignedGetUrl(document.getLatestObjectKey());
+        return cloudinaryService.getDownloadUrl(document.getLatestObjectKey());
     }
 
     public String getVersionDownloadUrl(Long documentId, int versionNumber, User user) {
@@ -316,7 +316,7 @@ public class DocumentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Version", "number", versionNumber));
         auditLogService.log(user, "DOWNLOAD_VERSION", "Document", documentId,
                 "Downloaded v" + versionNumber + " of: " + document.getTitle());
-        return minioService.presignedGetUrl(version.getObjectKey());
+        return cloudinaryService.getDownloadUrl(version.getObjectKey());
     }
 
     public DocumentVersion getVersion(Long documentId, int versionNumber) {
